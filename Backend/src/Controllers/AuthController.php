@@ -45,26 +45,24 @@ class AuthController
 
             // Kiểm tra user đã tồn tại chưa
             $user = $this->db->fetch(
-                'SELECT * FROM users WHERE email = ? AND provider = ?',
+                'SELECT * FROM khachhang WHERE Email = ? AND LoaiKH = ?',
                 [$userInfo['email'], 'google']
             );
 
             if (!$user) {
                 // Tạo user mới
                 $this->db->query(
-                    'INSERT INTO users (name, email, avatar, provider, provider_id, created_at) VALUES (?, ?, ?, ?, ?, NOW())',
+                    'INSERT INTO khachhang (HoTen, Email, LoaiKH, TaoLuc) VALUES (?, ?, ?, NOW())',
                     [
                         $userInfo['name'],
                         $userInfo['email'],
-                        $userInfo['picture'] ?? null,
-                        'google',
-                        $userInfo['sub']
+                        'google'
                     ]
                 );
                 
                 $userId = $this->db->lastInsertId();
                 
-                $user = $this->db->fetch('SELECT * FROM users WHERE id = ?', [$userId]);
+                $user = $this->db->fetch('SELECT * FROM khachhang WHERE KhachHangID = ?', [$userId]);
             }
 
             // Tạo JWT token
@@ -73,12 +71,12 @@ class AuthController
             Response::success([
                 'token' => $token,
                 'user' => [
-                    'id' => $user['id'],
-                    'name' => $user['name'],
-                    'email' => $user['email'],
-                    'avatar' => $user['avatar'],
+                    'id' => $user['KhachHangID'],
+                    'name' => $user['HoTen'],
+                    'email' => $user['Email'],
+                    'avatar' => null,
                 ]
-            ], 'Login successful');
+            ], 'Đăng nhập Google thành công');
 
         } catch (\Exception $e) {
             Response::serverError('Google login failed: ' . $e->getMessage());
@@ -109,7 +107,7 @@ class AuthController
 
         // Kiểm tra email đã tồn tại
         $existingUser = $this->db->fetch(
-            'SELECT id FROM users WHERE email = ?',
+            'SELECT KhachHangID FROM khachhang WHERE Email = ?',
             [$data['email']]
         );
 
@@ -124,7 +122,7 @@ class AuthController
 
             // Insert user
             $this->db->query(
-                'INSERT INTO users (name, email, password, phone, gender, address, provider, created_at) 
+                'INSERT INTO khachhang (HoTen, Email, MatKhau, SoDienThoai, GioiTinh, DiaChi, LoaiKH, TaoLuc) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
                 [
                     $data['full_name'],
@@ -138,7 +136,7 @@ class AuthController
             );
 
             $userId = $this->db->lastInsertId();
-            $user = $this->db->fetch('SELECT * FROM users WHERE id = ?', [$userId]);
+            $user = $this->db->fetch('SELECT * FROM khachhang WHERE KhachHangID = ?', [$userId]);
 
             // Generate token
             $token = $this->generateToken($user);
@@ -146,11 +144,11 @@ class AuthController
             Response::success([
                 'token' => $token,
                 'user' => [
-                    'id' => $user['id'],
-                    'name' => $user['name'],
-                    'email' => $user['email'],
+                    'id' => $user['KhachHangID'],
+                    'name' => $user['HoTen'],
+                    'email' => $user['Email'],
                 ]
-            ], 'Registration successful', 201);
+            ], 'Đăng ký khách hàng thành công', 201);
 
         } catch (\Exception $e) {
             Response::serverError('Registration failed: ' . $e->getMessage());
@@ -172,11 +170,11 @@ class AuthController
         }
 
         $user = $this->db->fetch(
-            'SELECT * FROM users WHERE email = ? AND provider = ?',
+            'SELECT * FROM khachhang WHERE Email = ? AND LoaiKH = ?',
             [$email, 'local']
         );
 
-        if (!$user || !password_verify($password, $user['password'])) {
+        if (!$user || !password_verify($password, $user['MatKhau'] ?? '')) {
             Response::error('Invalid credentials', 401);
             return;
         }
@@ -186,9 +184,9 @@ class AuthController
         Response::success([
             'token' => $token,
             'user' => [
-                'id' => $user['id'],
-                'name' => $user['name'],
-                'email' => $user['email'],
+                'id' => $user['KhachHangID'],
+                'name' => $user['HoTen'],
+                'email' => $user['Email'],
             ]
         ], 'Login successful');
     }
@@ -242,8 +240,8 @@ class AuthController
 
         $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
         $payload = json_encode([
-            'user_id' => $user['id'],
-            'email' => $user['email'],
+            'user_id' => $user['KhachHangID'],
+            'email' => $user['Email'],
             'exp' => $expiration
         ]);
 

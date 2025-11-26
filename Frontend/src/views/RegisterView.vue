@@ -58,13 +58,7 @@
             prefixIcon="🔒"
           />
 
-          <FormSelect
-            v-model="formData.gender"
-            label="Giới tính"
-            placeholder="Chọn giới tính"
-            :options="genderOptions"
-            :error="errors.gender"
-          />
+          
 
           <FormTextarea
             v-model="formData.address"
