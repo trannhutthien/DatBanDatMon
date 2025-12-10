@@ -134,7 +134,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { googleTokenLogin } from 'vue3-google-login'
+import { decodeCredential, googleSdkLoaded } from 'vue3-google-login'
 import FormInput from '@/components/form/Input.vue'
 import FormButton from '@/components/form/Button.vue'
 import FormTextarea from '@/components/form/Textarea.vue'
@@ -265,31 +265,36 @@ const handleRegister = async () => {
   }
 }
 
-const handleGoogleLogin = async () => {
+const handleGoogleLogin = () => {
   isGoogleLoading.value = true
   
-  try {
-    const response = await googleTokenLogin()
-    
-    if (response && response.access_token) {
-      // Gửi token lên backend
-      const authResponse = await authService.loginWithGoogle(
-        response.access_token,
-        import.meta.env.VITE_GOOGLE_CLIENT_ID
-      )
-      
-      if (authResponse.success) {
-        alert('Đăng nhập Google thành công!')
-        router.push('/')
-      }
-    }
-  } catch (error: any) {
-    console.error('Google login error:', error)
-    const message = error.response?.data?.message || 'Đăng nhập Google thất bại!'
-    alert(message)
-  } finally {
-    isGoogleLoading.value = false
-  }
+  googleSdkLoaded(google => {
+    google.accounts.oauth2
+      .initCodeClient({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        scope: 'email profile openid',
+        ux_mode: 'popup',
+        callback: async (response: any) => {
+          if (response.code) {
+            try {
+              // Gửi authorization code lên backend
+              const authResponse = await authService.loginWithGoogleCode(response.code)
+              
+              if (authResponse.success) {
+                alert('Đăng nhập Google thành công!')
+                router.push('/')
+              }
+            } catch (error: any) {
+              console.error('Google login error:', error)
+              const message = error.response?.data?.message || 'Đăng nhập Google thất bại!'
+              alert(message)
+            }
+          }
+          isGoogleLoading.value = false
+        },
+      })
+      .requestCode()
+  })
 }
 
 const handleSocialLogin = (provider: string) => {
