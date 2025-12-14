@@ -6,14 +6,34 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
+      component: () => import('../views/HomeView.vue'),
+    },
+    {
+      path: '/order',
+      name: 'order',
       component: () => import('../views/OrderView.vue'),
     },
     {
       path: '/register',
       name: 'register',
-      component: () => import('../views/RegisterView.vue'),
+      component: () => import('../components/form/RegisterView.vue'),
     },
-    // Routes sẽ được thêm vào đây
+    {
+      path: '/auth/callback',
+      name: 'auth-callback',
+      component: () => import('../views/AuthCallbackView.vue'),
+    },
+    // Admin Routes
+    {
+      path: '/admin/users',
+      name: 'admin-users',
+      component: () => import('../views/admin/AccountUser.vue'),
+    },
+    {
+      path: '/admin/restaurants',
+      name: 'admin-restaurants',
+      component: () => import('../views/admin/AccountNhaHang.vue'),
+    },
   ],
 })
 

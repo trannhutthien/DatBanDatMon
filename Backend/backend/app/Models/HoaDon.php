@@ -1,4 +1,35 @@
 <?php
+/**
+ * ============================================================================
+ * MODEL HOADON - HÓA ĐƠN
+ * ============================================================================
+ * 
+ * Model này đại diện cho bảng 'hoadon' trong database.
+ * Quản lý hóa đơn thanh toán của khách hàng.
+ * 
+ * BẢNG DATABASE: hoadon
+ * KHÓA CHÍNH: HoaDonID (auto increment)
+ * 
+ * CÁC CỘT:
+ * - HoaDonID: ID hóa đơn (PK)
+ * - DatBanID: FK -> datban (thuộc đơn đặt bàn nào)
+ * - NgayLap: Ngày lập hóa đơn
+ * - GiamGia: Số tiền giảm giá (VNĐ)
+ * - Thue: Phần trăm thuế (%)
+ * - TongTien: Tổng tiền sau giảm giá và thuế
+ * - PhuongThucTT: 1=Tiền mặt, 2=Chuyển khoản, 3=Thẻ
+ * - TrangThai: 1=Chưa thanh toán, 2=Đã thanh toán, 3=Hủy
+ * - TaoLuc: Thời gian tạo
+ * - CapNhatLuc: Thời gian cập nhật
+ * 
+ * QUAN HỆ:
+ * - belongsTo DatBan (thuộc về 1 đơn đặt bàn)
+ * - hasMany ChiTietHoaDon (có nhiều chi tiết)
+ * 
+ * CÔNG THỨC TÍNH TIỀN:
+ * TongTien = (TongTienMon - GiamGia) × (1 + Thue/100)
+ * ============================================================================
+ */
 
 namespace App\Models;
 
@@ -10,37 +41,37 @@ class HoaDon extends Model
     use HasFactory;
 
     /**
-     * Tên bảng trong database
+     * TÊN BẢNG TRONG DATABASE
      */
     protected $table = 'hoadon';
 
     /**
-     * Khóa chính của bảng
+     * KHÓA CHÍNH
      */
     protected $primaryKey = 'HoaDonID';
 
     /**
-     * Không sử dụng timestamps mặc định của Laravel
+     * TẮT TIMESTAMPS TỰ ĐỘNG
      */
     public $timestamps = false;
 
     /**
-     * Các trường có thể gán hàng loạt
+     * CÁC TRƯỜNG CÓ THỂ GÁN HÀNG LOẠT
      */
     protected $fillable = [
-        'DatBanID',
-        'NgayLap',
-        'GiamGia',
-        'Thue',
-        'TongTien',
-        'PhuongThucTT',
-        'TrangThai',
-        'TaoLuc',
-        'CapNhatLuc'
+        'DatBanID',      // FK đơn đặt bàn
+        'NgayLap',       // Ngày lập hóa đơn
+        'GiamGia',       // Số tiền giảm giá
+        'Thue',          // Phần trăm thuế
+        'TongTien',      // Tổng tiền cuối cùng
+        'PhuongThucTT',  // Phương thức thanh toán
+        'TrangThai',     // Trạng thái hóa đơn
+        'TaoLuc',        // Thời gian tạo
+        'CapNhatLuc'     // Thời gian cập nhật
     ];
 
     /**
-     * Các trường ngày tháng
+     * CÁC TRƯỜNG NGÀY THÁNG
      */
     protected $dates = [
         'NgayLap',
@@ -49,72 +80,147 @@ class HoaDon extends Model
     ];
 
     /**
-     * Các trường ép kiểu
+     * ÉP KIỂU DỮ LIỆU
      */
     protected $casts = [
-        'GiamGia' => 'decimal:2',
-        'Thue' => 'decimal:2',
-        'TongTien' => 'decimal:2',
-        'PhuongThucTT' => 'integer',
-        'TrangThai' => 'integer'
+        'GiamGia' => 'decimal:2',     // 50000.00
+        'Thue' => 'decimal:2',         // 10.00 (%)
+        'TongTien' => 'decimal:2',     // 500000.00
+        'PhuongThucTT' => 'integer',   // 1, 2, 3
+        'TrangThai' => 'integer'       // 1, 2, 3
     ];
 
     /**
-     * Các phương thức thanh toán
+     * ========================================================================
+     * CONSTANTS - PHƯƠNG THỨC THANH TOÁN
+     * ========================================================================
      */
-    const PHUONG_THUC_TIEN_MAT = 1;     // Tiền mặt
-    const PHUONG_THUC_CHUYEN_KHOAN = 2; // Chuyển khoản
-    const PHUONG_THUC_THE = 3;          // Thẻ
+    const PHUONG_THUC_TIEN_MAT = 1;     // Thanh toán tiền mặt
+    const PHUONG_THUC_CHUYEN_KHOAN = 2; // Chuyển khoản ngân hàng
+    const PHUONG_THUC_THE = 3;          // Quẹt thẻ (Visa, Master, etc.)
 
     /**
-     * Các trạng thái hóa đơn
+     * ========================================================================
+     * CONSTANTS - TRẠNG THÁI HÓA ĐƠN
+     * ========================================================================
      */
-    const TRANG_THAI_CHUA_THANH_TOAN = 1;  // Chưa thanh toán
-    const TRANG_THAI_DA_THANH_TOAN = 2;    // Đã thanh toán
+    const TRANG_THAI_CHUA_THANH_TOAN = 1;  // Chưa thanh toán - đang chờ
+    const TRANG_THAI_DA_THANH_TOAN = 2;    // Đã thanh toán - hoàn tất
     const TRANG_THAI_HUY = 3;              // Đã hủy
 
     /**
-     * Quan hệ với DatBan
+     * ========================================================================
+     * QUAN HỆ VỚI DATBAN (NHIỀU - MỘT)
+     * ========================================================================
+     * 
+     * Mỗi hóa đơn thuộc về một đơn đặt bàn.
+     * 
+     * SỬ DỤNG:
+     * - $hoaDon->datBan                  // Lấy đơn đặt bàn
+     * - $hoaDon->datBan->ban             // Lấy thông tin bàn
+     * - $hoaDon->datBan->khachHang       // Lấy thông tin khách hàng
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function datBan()
     {
-        return $this->belongsTo(DatBan::class, 'DatBanID', 'DatBanID');
+        return $this->belongsTo(
+            DatBan::class,
+            'DatBanID',
+            'DatBanID'
+        );
     }
 
     /**
-     * Quan hệ với ChiTietHoaDon
+     * ========================================================================
+     * QUAN HỆ VỚI CHITIETHOADON (MỘT - NHIỀU)
+     * ========================================================================
+     * 
+     * Một hóa đơn có nhiều chi tiết (các món ăn).
+     * 
+     * SỬ DỤNG:
+     * - $hoaDon->chiTietHoaDon                      // Lấy tất cả chi tiết
+     * - $hoaDon->chiTietHoaDon->sum('ThanhTien')    // Tổng tiền các món
+     * - $hoaDon->chiTietHoaDon()->with('monAn')     // Eager load món ăn
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function chiTietHoaDon()
     {
-        return $this->hasMany(ChiTietHoaDon::class, 'HoaDonID', 'HoaDonID');
+        return $this->hasMany(
+            ChiTietHoaDon::class,
+            'HoaDonID',
+            'HoaDonID'
+        );
     }
 
     /**
-     * Scope lọc theo trạng thái
+     * ========================================================================
+     * SCOPES - LỌC THEO TRẠNG THÁI
+     * ========================================================================
+     * 
+     * SỬ DỤNG:
+     * - HoaDon::chuaThanhToan()->get()    // Hóa đơn chưa thanh toán
+     * - HoaDon::daThanhToan()->sum('TongTien')  // Tổng doanh thu
+     * - HoaDon::daThanhToan()->whereDate('NgayLap', today())->get()  // Hôm nay
+     */
+    
+    /**
+     * Scope lọc chưa thanh toán
      */
     public function scopeChuaThanhToan($query)
     {
         return $query->where('TrangThai', self::TRANG_THAI_CHUA_THANH_TOAN);
     }
 
+    /**
+     * Scope lọc đã thanh toán
+     */
     public function scopeDaThanhToan($query)
     {
         return $query->where('TrangThai', self::TRANG_THAI_DA_THANH_TOAN);
     }
 
+    /**
+     * Scope lọc đã hủy
+     */
     public function scopeDaHuy($query)
     {
         return $query->where('TrangThai', self::TRANG_THAI_HUY);
     }
 
     /**
-     * Tính tổng tiền hóa đơn
+     * ========================================================================
+     * METHOD - TÍNH TỔNG TIỀN HÓA ĐƠN
+     * ========================================================================
+     * 
+     * Tính tổng tiền dựa trên chi tiết hóa đơn, giảm giá và thuế.
+     * 
+     * CÔNG THỨC:
+     * 1. Tổng tiền món = SUM(chi tiết.ThanhTien)
+     * 2. Sau giảm giá = Tổng tiền món - GiamGia
+     * 3. Sau thuế = Sau giảm giá × (1 + Thue/100)
+     * 
+     * SỬ DỤNG:
+     * - $tongTien = $hoaDon->tinhTongTien()
+     * - $hoaDon->TongTien = $hoaDon->tinhTongTien()
+     * - $hoaDon->save()
+     * 
+     * @return float Tổng tiền sau giảm giá và thuế
      */
     public function tinhTongTien()
     {
+        // Bước 1: Tính tổng tiền các món
+        // ThanhTien = SoLuong × DonGia (trong ChiTietHoaDon)
         $tongTienMon = $this->chiTietHoaDon->sum('ThanhTien');
+        
+        // Bước 2: Trừ giảm giá
         $tongSauGiam = $tongTienMon - $this->GiamGia;
+        
+        // Bước 3: Cộng thuế
+        // VD: Thuế 10% -> nhân với 1.1
         $tongSauThue = $tongSauGiam + ($tongSauGiam * $this->Thue / 100);
+        
         return $tongSauThue;
     }
 }

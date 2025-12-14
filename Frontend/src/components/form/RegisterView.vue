@@ -1,11 +1,13 @@
 <template>
-  <div class="register-page">
-    <div class="register-container">
-      <div class="register-card">
-        <div class="register-header">
-          <h1>Đăng Ký Tài Khoản</h1>
-          <p>Tạo tài khoản để trải nghiệm dịch vụ của chúng tôi</p>
-        </div>
+  <Teleport to="body">
+    <Transition name="fade">
+      <div v-if="modelValue" class="register-overlay" @click.self="close">
+        <div class="register-card">
+          <button class="close-btn" @click="close">×</button>
+          <div class="register-header">
+            <h1>Đăng Ký Tài Khoản</h1>
+            <p>Tạo tài khoản để trải nghiệm dịch vụ của chúng tôi</p>
+          </div>
 
         <form @submit.prevent="handleRegister" class="register-form">
           <FormInput
@@ -58,17 +60,6 @@
             prefixIcon="🔒"
           />
 
-          
-
-          <FormTextarea
-            v-model="formData.address"
-            label="Địa chỉ"
-            placeholder="Nhập địa chỉ của bạn"
-            :rows="3"
-            :maxLength="200"
-            :error="errors.address"
-          />
-
           <div class="terms-checkbox">
             <input
               type="checkbox"
@@ -96,7 +87,7 @@
           <div class="login-link">
             <p>
               Đã có tài khoản?
-              <router-link to="/login" class="link">Đăng nhập ngay</router-link>
+              <a href="#" class="link" @click.prevent="switchToLogin">Đăng nhập ngay</a>
             </p>
           </div>
         </form>
@@ -126,23 +117,40 @@
             <span>Facebook</span>
           </FormButton>
         </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { decodeCredential, googleSdkLoaded } from 'vue3-google-login'
-import FormInput from '@/components/form/Input.vue'
-import FormButton from '@/components/form/Button.vue'
-import FormTextarea from '@/components/form/Textarea.vue'
-import FormSelect from '@/components/form/Select.vue'
+import FormInput from '@/components/ui/Input.vue'
+import FormButton from '@/components/ui/Button.vue'
 import { Facebook } from 'lucide-vue-next'
 import authService from '@/services/auth.service'
 
-const router = useRouter()
+interface Props {
+  modelValue: boolean
+}
+
+const props = defineProps<Props>()
+
+const emit = defineEmits<{
+  'update:modelValue': [value: boolean]
+  success: []
+  'switch-to-login': []
+}>()
+
+const close = () => {
+  emit('update:modelValue', false)
+}
+
+const switchToLogin = () => {
+  close()
+  emit('switch-to-login')
+}
+
 const isLoading = ref(false)
 const isGoogleLoading = ref(false)
 
@@ -152,8 +160,6 @@ const formData = reactive({
   phone: '',
   password: '',
   confirmPassword: '',
-  gender: '',
-  address: '',
   agreeTerms: false
 })
 
@@ -163,32 +169,21 @@ const errors = reactive({
   phone: '',
   password: '',
   confirmPassword: '',
-  gender: '',
-  address: '',
   agreeTerms: ''
 })
-
-const genderOptions = [
-  { label: 'Nam', value: 'male' },
-  { label: 'Nữ', value: 'female' },
-  { label: 'Khác', value: 'other' }
-]
 
 const validateForm = (): boolean => {
   let isValid = true
   
-  // Reset errors
   Object.keys(errors).forEach(key => {
     errors[key as keyof typeof errors] = ''
   })
 
-  // Validate full name
   if (!formData.fullName.trim()) {
     errors.fullName = 'Vui lòng nhập họ và tên'
     isValid = false
   }
 
-  // Validate email
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!formData.email.trim()) {
     errors.email = 'Vui lòng nhập email'
@@ -198,7 +193,6 @@ const validateForm = (): boolean => {
     isValid = false
   }
 
-  // Validate phone
   const phoneRegex = /^[0-9]{10}$/
   if (!formData.phone.trim()) {
     errors.phone = 'Vui lòng nhập số điện thoại'
@@ -208,7 +202,6 @@ const validateForm = (): boolean => {
     isValid = false
   }
 
-  // Validate password
   if (!formData.password) {
     errors.password = 'Vui lòng nhập mật khẩu'
     isValid = false
@@ -217,7 +210,6 @@ const validateForm = (): boolean => {
     isValid = false
   }
 
-  // Validate confirm password
   if (!formData.confirmPassword) {
     errors.confirmPassword = 'Vui lòng xác nhận mật khẩu'
     isValid = false
@@ -226,7 +218,6 @@ const validateForm = (): boolean => {
     isValid = false
   }
 
-  // Validate terms
   if (!formData.agreeTerms) {
     errors.agreeTerms = 'Vui lòng đồng ý với điều khoản dịch vụ'
     isValid = false
@@ -236,9 +227,7 @@ const validateForm = (): boolean => {
 }
 
 const handleRegister = async () => {
-  if (!validateForm()) {
-    return
-  }
+  if (!validateForm()) return
 
   isLoading.value = true
 
@@ -248,53 +237,27 @@ const handleRegister = async () => {
       email: formData.email,
       phone: formData.phone,
       password: formData.password,
-      gender: formData.gender,
-      address: formData.address,
     })
     
     if (response.success) {
+      // Dispatch event để Header cập nhật trạng thái
+      window.dispatchEvent(new Event('auth-changed'))
       alert('Đăng ký thành công!')
-      router.push('/')
+      emit('success')
+      close()
     }
   } catch (error: any) {
     console.error('Register error:', error)
-    const message = error.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại!'
-    alert(message)
+    alert(error.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại!')
   } finally {
     isLoading.value = false
   }
 }
 
 const handleGoogleLogin = () => {
-  isGoogleLoading.value = true
-  
-  googleSdkLoaded(google => {
-    google.accounts.oauth2
-      .initCodeClient({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        scope: 'email profile openid',
-        ux_mode: 'popup',
-        callback: async (response: any) => {
-          if (response.code) {
-            try {
-              // Gửi authorization code lên backend
-              const authResponse = await authService.loginWithGoogleCode(response.code)
-              
-              if (authResponse.success) {
-                alert('Đăng nhập Google thành công!')
-                router.push('/')
-              }
-            } catch (error: any) {
-              console.error('Google login error:', error)
-              const message = error.response?.data?.message || 'Đăng nhập Google thất bại!'
-              alert(message)
-            }
-          }
-          isGoogleLoading.value = false
-        },
-      })
-      .requestCode()
-  })
+  // Redirect đến backend để xử lý Google OAuth
+  // Backend sẽ redirect về frontend với token sau khi xác thực thành công
+  window.location.href = 'http://localhost:8000/api/auth/google'
 }
 
 const handleSocialLogin = (provider: string) => {
@@ -306,26 +269,85 @@ const handleSocialLogin = (provider: string) => {
 }
 </script>
 
+
 <style scoped>
-.register-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.register-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
-}
-
-.register-container {
-  width: 100%;
-  max-width: 600px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .register-card {
+  position: relative;
   background: #fff;
-  border-radius: 16px;
-  padding: 3rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 50%;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.close-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  transform: rotate(90deg);
+}
+
+/* Transition */
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.fade-enter-from .register-card,
+.fade-leave-to .register-card {
+  transform: translateY(30px) scale(0.95);
 }
 
 .register-header {

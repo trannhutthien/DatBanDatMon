@@ -1,4 +1,33 @@
 <?php
+/**
+ * ============================================================================
+ * MODEL KHACHHANG - KHÁCH HÀNG
+ * ============================================================================
+ * 
+ * Model này đại diện cho bảng 'khachhang' trong database.
+ * Quản lý thông tin khách hàng đặt bàn.
+ * 
+ * BẢNG DATABASE: khachhang
+ * KHÓA CHÍNH: KhachHangID (auto increment)
+ * 
+ * CÁC CỘT:
+ * - KhachHangID: ID khách hàng (PK)
+ * - TenKH: Tên khách hàng
+ * - SDT: Số điện thoại
+ * - Email: Email
+ * - GhiChu: Ghi chú (VD: "Khách VIP", "Dị ứng hải sản")
+ * - TaoLuc: Thời gian tạo
+ * - CapNhatLuc: Thời gian cập nhật
+ * 
+ * QUAN HỆ:
+ * - hasMany DatBan (một khách có nhiều lần đặt bàn)
+ * 
+ * PHÂN BIỆT VỚI NGUOIDUNG:
+ * - NguoiDung: Tài khoản đăng nhập hệ thống (có mật khẩu)
+ * - KhachHang: Thông tin khách đặt bàn (không cần tài khoản)
+ * - Khách có thể đặt bàn qua điện thoại mà không cần đăng ký
+ * ============================================================================
+ */
 
 namespace App\Models;
 
@@ -10,34 +39,34 @@ class KhachHang extends Model
     use HasFactory;
 
     /**
-     * Tên bảng trong database
+     * TÊN BẢNG TRONG DATABASE
      */
     protected $table = 'khachhang';
 
     /**
-     * Khóa chính của bảng
+     * KHÓA CHÍNH
      */
     protected $primaryKey = 'KhachHangID';
 
     /**
-     * Không sử dụng timestamps mặc định của Laravel
+     * TẮT TIMESTAMPS TỰ ĐỘNG
      */
     public $timestamps = false;
 
     /**
-     * Các trường có thể gán hàng loạt
+     * CÁC TRƯỜNG CÓ THỂ GÁN HÀNG LOẠT
      */
     protected $fillable = [
-        'TenKH',
-        'SDT',
-        'Email',
-        'GhiChu',
-        'TaoLuc',
-        'CapNhatLuc'
+        'TenKH',       // Tên khách hàng
+        'SDT',         // Số điện thoại
+        'Email',       // Email
+        'GhiChu',      // Ghi chú
+        'TaoLuc',      // Thời gian tạo
+        'CapNhatLuc'   // Thời gian cập nhật
     ];
 
     /**
-     * Các trường ngày tháng
+     * CÁC TRƯỜNG NGÀY THÁNG
      */
     protected $dates = [
         'TaoLuc',
@@ -45,10 +74,26 @@ class KhachHang extends Model
     ];
 
     /**
-     * Quan hệ với DatBan
+     * ========================================================================
+     * QUAN HỆ VỚI DATBAN (MỘT - NHIỀU)
+     * ========================================================================
+     * 
+     * Một khách hàng có thể đặt bàn nhiều lần.
+     * 
+     * SỬ DỤNG:
+     * - $khachHang->datBan                           // Tất cả lần đặt bàn
+     * - $khachHang->datBan()->count()                // Số lần đặt bàn
+     * - $khachHang->datBan()->latest('TaoLuc')       // Đặt bàn gần nhất
+     * - $khachHang->datBan()->where('TrangThai', 5)  // Các đặt bàn hoàn thành
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function datBan()
     {
-        return $this->hasMany(DatBan::class, 'KhachHangID', 'KhachHangID');
+        return $this->hasMany(
+            DatBan::class,
+            'KhachHangID',
+            'KhachHangID'
+        );
     }
 }

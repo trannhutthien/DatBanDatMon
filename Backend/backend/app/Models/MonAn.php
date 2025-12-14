@@ -1,4 +1,30 @@
 <?php
+/**
+ * ============================================================================
+ * MODEL MONAN - MÓN ĂN
+ * ============================================================================
+ * 
+ * Model này đại diện cho bảng 'monan' trong database.
+ * Quản lý danh sách các món ăn của nhà hàng.
+ * 
+ * BẢNG DATABASE: monan
+ * KHÓA CHÍNH: MonAnID (auto increment)
+ * 
+ * CÁC CỘT:
+ * - MonAnID: ID món ăn (PK)
+ * - TenMon: Tên món ăn
+ * - DonGia: Giá tiền (decimal)
+ * - HinhAnh: Đường dẫn/URL hình ảnh
+ * - MoTa: Mô tả món ăn
+ * - TrangThai: 1=Còn món, 0=Hết món
+ * - TaoLuc: Thời gian tạo
+ * - CapNhatLuc: Thời gian cập nhật
+ * 
+ * QUAN HỆ:
+ * - hasMany DatMon (một món có nhiều lần được đặt)
+ * - hasMany ChiTietHoaDon (một món xuất hiện trong nhiều hóa đơn)
+ * ============================================================================
+ */
 
 namespace App\Models;
 
@@ -10,35 +36,38 @@ class MonAn extends Model
     use HasFactory;
 
     /**
-     * Tên bảng trong database
+     * TÊN BẢNG TRONG DATABASE
      */
     protected $table = 'monan';
 
     /**
-     * Khóa chính của bảng
+     * KHÓA CHÍNH
      */
     protected $primaryKey = 'MonAnID';
 
     /**
-     * Không sử dụng timestamps mặc định của Laravel
+     * TẮT TIMESTAMPS TỰ ĐỘNG
+     * Bảng dùng TaoLuc, CapNhatLuc thay vì created_at, updated_at
      */
     public $timestamps = false;
 
     /**
-     * Các trường có thể gán hàng loạt
+     * CÁC TRƯỜNG CÓ THỂ GÁN HÀNG LOẠT
      */
     protected $fillable = [
-        'TenMon',
-        'DonGia',
-        'HinhAnh',
-        'MoTa',
-        'TrangThai',
-        'TaoLuc',
-        'CapNhatLuc'
+        'TenMon',      // Tên món ăn
+        'NhaHangID',   // FK nhà hàng (thuộc nhà hàng nào)
+        'DonGia',      // Giá tiền
+        'HinhAnh',     // URL hình ảnh
+        'MoTa',        // Mô tả
+        'TrangThai',   // Trạng thái còn/hết
+        'TaoLuc',      // Thời gian tạo
+        'CapNhatLuc'   // Thời gian cập nhật
     ];
 
     /**
-     * Các trường ngày tháng
+     * CÁC TRƯỜNG NGÀY THÁNG
+     * Tự động convert sang Carbon instance
      */
     protected $dates = [
         'TaoLuc',
@@ -46,35 +75,107 @@ class MonAn extends Model
     ];
 
     /**
-     * Các trường ép kiểu
+     * ÉP KIỂU DỮ LIỆU
+     * 
+     * decimal:2 = Số thập phân 2 chữ số sau dấu phẩy
+     * integer = Số nguyên
      */
     protected $casts = [
-        'DonGia' => 'decimal:2',
-        'TrangThai' => 'integer'
+        'DonGia' => 'decimal:2',    // 65000.00
+        'TrangThai' => 'integer'     // 0 hoặc 1
     ];
 
     /**
-     * Các trạng thái của món ăn
+     * ========================================================================
+     * CONSTANTS - TRẠNG THÁI MÓN ĂN
+     * ========================================================================
+     * 
+     * Dùng trong code thay vì hardcode số:
+     * - MonAn::TRANG_THAI_CON_MON = 1
+     * - MonAn::TRANG_THAI_HET_MON = 0
      */
-    const TRANG_THAI_CON_MON = 1;   // Còn món
-    const TRANG_THAI_HET_MON = 0;   // Hết món
+    const TRANG_THAI_CON_MON = 1;   // Còn món - có thể đặt
+    const TRANG_THAI_HET_MON = 0;   // Hết món - không thể đặt
 
     /**
-     * Quan hệ với DatMon
+     * ========================================================================
+     * QUAN HỆ VỚI NHAHANG (NHIỀU - MỘT)
+     * ========================================================================
+     * 
+     * Mỗi món ăn thuộc về một nhà hàng.
+     * 
+     * SỬ DỤNG:
+     * - $monAn->nhaHang                  // Lấy thông tin nhà hàng
+     * - $monAn->nhaHang->TenNhaHang      // Tên nhà hàng
+     * - $monAn->nhaHang->DiaChi          // Địa chỉ nhà hàng
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function nhaHang()
+    {
+        return $this->belongsTo(
+            NhaHang::class,
+            'NhaHangID',
+            'NhaHangID'
+        );
+    }
+
+    /**
+     * ========================================================================
+     * QUAN HỆ VỚI DATMON (MỘT - NHIỀU)
+     * ========================================================================
+     * 
+     * Một món ăn có thể được đặt nhiều lần (trong nhiều đơn đặt bàn).
+     * 
+     * SỬ DỤNG:
+     * - $monAn->datMon                    // Lấy tất cả lần đặt món này
+     * - $monAn->datMon()->count()         // Đếm số lần được đặt
+     * - $monAn->datMon()->sum('SoLuong')  // Tổng số lượng đã đặt
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function datMon()
     {
-        return $this->hasMany(DatMon::class, 'MonAnID', 'MonAnID');
+        return $this->hasMany(
+            DatMon::class,    // Model liên kết
+            'MonAnID',        // FK trong bảng datmon
+            'MonAnID'         // PK trong bảng monan
+        );
     }
 
     /**
-     * Quan hệ với ChiTietHoaDon
+     * ========================================================================
+     * QUAN HỆ VỚI CHITIETHOADON (MỘT - NHIỀU)
+     * ========================================================================
+     * 
+     * Một món ăn xuất hiện trong nhiều chi tiết hóa đơn.
+     * 
+     * SỬ DỤNG:
+     * - $monAn->chiTietHoaDon                      // Lấy tất cả chi tiết hóa đơn
+     * - $monAn->chiTietHoaDon()->sum('ThanhTien')  // Tổng doanh thu từ món này
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function chiTietHoaDon()
     {
-        return $this->hasMany(ChiTietHoaDon::class, 'MonAnID', 'MonAnID');
+        return $this->hasMany(
+            ChiTietHoaDon::class,
+            'MonAnID',
+            'MonAnID'
+        );
     }
 
+    /**
+     * ========================================================================
+     * SCOPES - LỌC THEO TRẠNG THÁI
+     * ========================================================================
+     * 
+     * SỬ DỤNG:
+     * - MonAn::conMon()->get()    // Lấy các món còn
+     * - MonAn::hetMon()->get()    // Lấy các món hết
+     * - MonAn::conMon()->where('DonGia', '<', 100000)->get()
+     */
+    
     /**
      * Scope lọc món còn
      */

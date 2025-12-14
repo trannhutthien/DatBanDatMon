@@ -5,72 +5,64 @@ export interface LoginResponse {
   message: string
   data: {
     token: string
+    token_type: string
     user: {
-      id: number
-      name: string
-      email: string
-      avatar?: string
+      NguoiDungID: number
+      HoTen: string
+      Email: string
+      SDT?: string
+      LoaiNguoiDung?: number
+      DiaChi?: string
+      Avatar?: string
     }
   }
 }
 
 export interface GoogleAuthPayload {
   credential: string
+  client_id: string
 }
 
 class AuthService {
-  // Login với Google (sử dụng ID Token từ Google One Tap)
-  async loginWithGoogle(credential: string): Promise<LoginResponse> {
+  // Login với Google
+  async loginWithGoogle(credential: string, clientId: string): Promise<LoginResponse> {
     const response = await apiClient.post<LoginResponse>('/auth/google/token', {
       credential,
+      client_id: clientId,
     })
-
+    
     if (response.data.success && response.data.data.token) {
       this.setToken(response.data.data.token)
       this.setUser(response.data.data.user)
     }
-
-    return response.data
-  }
-
-  // Login với Google (sử dụng Authorization Code)
-  async loginWithGoogleCode(code: string): Promise<LoginResponse> {
-    const response = await apiClient.post<LoginResponse>('/auth/google/code', {
-      code,
-    })
-
-    if (response.data.success && response.data.data.token) {
-      this.setToken(response.data.data.token)
-      this.setUser(response.data.data.user)
-    }
-
+    
     return response.data
   }
 
   // Đăng ký thông thường
   async register(data: any): Promise<any> {
     const response = await apiClient.post('/auth/register', data)
-
+    
     if (response.data.success && response.data.data.token) {
       this.setToken(response.data.data.token)
       this.setUser(response.data.data.user)
     }
-
+    
     return response.data
   }
 
   // Đăng nhập thông thường
   async login(email: string, password: string): Promise<LoginResponse> {
     const response = await apiClient.post<LoginResponse>('/auth/login', {
-      email,
-      password,
+      Email: email,
+      MatKhau: password,
     })
-
+    
     if (response.data.success && response.data.data.token) {
       this.setToken(response.data.data.token)
       this.setUser(response.data.data.user)
     }
-
+    
     return response.data
   }
 

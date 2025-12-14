@@ -1,4 +1,19 @@
 <?php
+/**
+ * ============================================================================
+ * AUTH CONFIGURATION - CẤU HÌNH XÁC THỰC NGƯỜI DÙNG
+ * ============================================================================
+ * 
+ * File này cấu hình hệ thống authentication của Laravel:
+ * - Guards: Cách xác thực user (session, token, etc.)
+ * - Providers: Nguồn dữ liệu user (database, eloquent model)
+ * - Passwords: Cấu hình reset mật khẩu
+ * 
+ * QUAN TRỌNG:
+ * - Provider 'users' đã được đổi sang dùng Model NguoiDung
+ * - Thay vì Model User mặc định của Laravel
+ * ============================================================================
+ */
 
 return [
 
@@ -13,6 +28,12 @@ return [
     |
     */
 
+    /**
+     * DEFAULTS - Cấu hình mặc định
+     * 
+     * guard: 'web' = Sử dụng guard 'web' làm mặc định
+     * passwords: 'users' = Sử dụng config 'users' cho reset password
+     */
     'defaults' => [
         'guard' => 'web',
         'passwords' => 'users',
@@ -35,6 +56,19 @@ return [
     |
     */
 
+    /**
+     * GUARDS - Các phương thức xác thực
+     * 
+     * Guard 'web':
+     * - driver: 'session' = Lưu trạng thái đăng nhập trong session
+     * - provider: 'users' = Lấy user từ provider 'users' (định nghĩa bên dưới)
+     * 
+     * LƯU Ý: Sanctum tự động thêm guard 'sanctum' cho API authentication
+     * Khi dùng middleware 'auth:sanctum', Sanctum sẽ:
+     * 1. Kiểm tra token trong header Authorization
+     * 2. Tìm token trong bảng personal_access_tokens
+     * 3. Lấy user từ provider 'users'
+     */
     'guards' => [
         'web' => [
             'driver' => 'session',
@@ -59,12 +93,29 @@ return [
     |
     */
 
+    /**
+     * PROVIDERS - Nguồn dữ liệu user
+     * 
+     * Provider 'users':
+     * - driver: 'eloquent' = Sử dụng Eloquent ORM
+     * - model: NguoiDung::class = Model đại diện cho user
+     * 
+     * ĐÃ THAY ĐỔI:
+     * - Mặc định Laravel dùng App\Models\User
+     * - Đã đổi sang App\Models\NguoiDung để phù hợp với database tiếng Việt
+     * 
+     * Model NguoiDung phải:
+     * - Extend Illuminate\Foundation\Auth\User (Authenticatable)
+     * - Có method getAuthPassword() trả về cột mật khẩu
+     * - Dùng trait HasApiTokens cho Sanctum
+     */
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => App\Models\NguoiDung::class,
+            'model' => App\Models\NguoiDung::class,  // ĐÃ ĐỔI TỪ User SANG NguoiDung
         ],
 
+        // Cấu hình thay thế nếu dùng Query Builder thay vì Eloquent
         // 'users' => [
         //     'driver' => 'database',
         //     'table' => 'users',
@@ -90,6 +141,14 @@ return [
     |
     */
 
+    /**
+     * PASSWORDS - Cấu hình reset mật khẩu
+     * 
+     * provider: 'users' = Dùng provider 'users' để tìm user
+     * table: 'password_reset_tokens' = Bảng lưu token reset
+     * expire: 60 = Token hết hạn sau 60 phút
+     * throttle: 60 = Phải đợi 60 giây mới được gửi lại email reset
+     */
     'passwords' => [
         'users' => [
             'provider' => 'users',
@@ -110,6 +169,13 @@ return [
     |
     */
 
+    /**
+     * PASSWORD TIMEOUT - Thời gian xác nhận mật khẩu
+     * 
+     * 10800 giây = 3 giờ
+     * Sau thời gian này, user phải nhập lại mật khẩu để xác nhận
+     * các hành động nhạy cảm (đổi email, xóa tài khoản, etc.)
+     */
     'password_timeout' => 10800,
 
 ];
