@@ -1,67 +1,106 @@
 <template>
   <div class="home-page">
-    <!-- Banner Slider -->
-    <Banner />
+    <!-- Hero Banner -->
+    <section class="hero-banner">
+      <div class="hero-content">
+        <h1>🍜 Chào mừng đến với <span class="brand">Ăn Ngon</span></h1>
+        <p class="subtitle">Khám phá những nhà hàng ngon nhất, đặt bàn dễ dàng</p>
+      </div>
+    </section>
 
-    <!-- Nhà hàng uy tín -->
-    <TrustedRestaurants @view-all="goToRestaurants" />
+    <div class="container">
+      <h2 class="section-title">🏪 Danh sách nhà hàng</h2>
 
-    <!-- Popular Dishes - Lấy từ API -->
-    <HomeFoot />
+      <!-- Loading -->
+      <div v-if="loading" class="loading">
+        <p>Đang tải danh sách nhà hàng...</p>
+      </div>
+
+      <!-- Error -->
+      <div v-else-if="error" class="error">
+        <p>{{ error }}</p>
+        <button @click="fetchRestaurants" class="retry-btn">Thử lại</button>
+      </div>
+
+      <!-- Empty -->
+      <div v-else-if="restaurants.length === 0" class="empty">
+        <p>Chưa có nhà hàng nào</p>
+      </div>
+
+      <!-- Danh sách nhà hàng -->
+      <div v-else class="restaurants-grid">
+        <RestaurantCard 
+          v-for="restaurant in restaurants" 
+          :key="restaurant.NhaHangID"
+          :restaurant="restaurant"
+          @click="handleRestaurantClick"
+          @view-menu="handleViewMenu"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-/**
- * ============================================================================
- * HOME VIEW - TRANG CHỦ
- * ============================================================================
- * 
- * Trang chủ của ứng dụng, bao gồm:
- * - Banner slider
- * - TrustedRestaurants (nhà hàng uy tín)
- * - HomeFoot (món ăn phổ biến - lấy từ API)
- * ============================================================================
- */
-
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import Banner from '@/components/Home/Banner.vue'
-import TrustedRestaurants from '@/components/Home/TrustedRestaurants.vue'
-import HomeFoot from '@/components/Home/HomeFoot.vue'
+import RestaurantCard from '@/components/Home/RestaurantCard.vue'
+import nhaHangService, { type NhaHang } from '@/services/nhahang.service'
 
 const router = useRouter()
 
-const goToRestaurants = () => {
-  // Có thể navigate đến trang danh sách nhà hàng
-  router.push('/order')
+const restaurants = ref<NhaHang[]>([])
+const loading = ref(true)
+const error = ref<string | null>(null)
+
+const fetchRestaurants = async () => {
+  loading.value = true
+  error.value = null
+  
+  try {
+    const response = await nhaHangService.getAll({ per_page: 100 })
+    restaurants.value = response.data.data || response.data as any
+  } catch (err: any) {
+    console.error('Error fetching restaurants:', err)
+    error.value = 'Không thể tải danh sách nhà hàng. Vui lòng thử lại.'
+  } finally {
+    loading.value = false
+  }
 }
+
+const handleRestaurantClick = (restaurant: NhaHang) => {
+  // Chuyển đến trang đặt bàn với filter theo nhà hàng
+  router.push({ path: '/order', query: { restaurant: restaurant.NhaHangID.toString() } })
+}
+
+const handleViewMenu = (restaurant: NhaHang) => {
+  // Chuyển đến trang món ăn
+  router.push({ path: '/dishes', query: { restaurant: restaurant.NhaHangID.toString() } })
+}
+
+onMounted(() => {
+  fetchRestaurants()
+})
 </script>
 
 <style scoped>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
 .home-page {
   min-height: 100vh;
   background: #f8f9fa;
 }
 
-/* Hero */
-.hero {
+/* Hero Banner */
+.hero-banner {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 100px 20px;
+  padding: 60px 20px;
   text-align: center;
   color: white;
 }
 
 .hero-content h1 {
-  font-size: 3.5rem;
+  font-size: 2.5rem;
   font-weight: 800;
-  margin-bottom: 1rem;
-  line-height: 1.2;
+  margin-bottom: 15px;
 }
 
 .brand {
@@ -72,113 +111,60 @@ const goToRestaurants = () => {
 }
 
 .subtitle {
-  font-size: 1.25rem;
-  opacity: 0.95;
-  margin-bottom: 2.5rem;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.btn-hero {
-  padding: 16px 40px;
   font-size: 1.1rem;
-  font-weight: 600;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-hero.primary {
-  background: linear-gradient(135deg, #e53935 0%, #ff6f00 100%);
-  color: white;
-  box-shadow: 0 4px 20px rgba(229, 57, 53, 0.4);
-}
-
-.btn-hero.primary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(229, 57, 53, 0.5);
-}
-
-.btn-hero.secondary {
-  background: white;
-  color: #667eea;
-  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
-}
-
-.btn-hero.secondary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(255, 255, 255, 0.4);
+  opacity: 0.9;
 }
 
 /* Container */
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 40px 20px;
 }
 
-/* Features */
-.features {
-  padding: 80px 20px;
-  background: white;
-}
-
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2.5rem;
-}
-
-.feature-card {
+.section-title {
   text-align: center;
-  padding: 2.5rem;
-  background: #f8f9fa;
-  border-radius: 20px;
-  transition: all 0.3s ease;
-}
-
-.feature-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
-}
-
-.feature-icon {
-  font-size: 4rem;
-  margin-bottom: 1.5rem;
-}
-
-.feature-card h3 {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   color: #2c3e50;
-  margin-bottom: 1rem;
+  margin-bottom: 30px;
 }
 
-.feature-card p {
+/* Grid */
+.restaurants-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 30px;
+}
+
+/* States */
+.loading,
+.error,
+.empty {
+  text-align: center;
+  padding: 60px 20px;
   color: #7f8c8d;
-  font-size: 1rem;
-  line-height: 1.6;
 }
 
-/* Popular section handled by PopularDishes component */
+.retry-btn {
+  margin-top: 15px;
+  padding: 10px 25px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
 
-/* Responsive */
+.retry-btn:hover {
+  transform: translateY(-2px);
+}
+
 @media (max-width: 768px) {
   .hero-content h1 {
-    font-size: 2.5rem;
+    font-size: 1.8rem;
   }
   
-  .subtitle {
-    font-size: 1rem;
-  }
-  
-  .feature-grid,
-  .dishes-grid {
+  .restaurants-grid {
     grid-template-columns: 1fr;
   }
 }

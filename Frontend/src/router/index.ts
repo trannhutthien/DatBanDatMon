@@ -9,6 +9,11 @@ const router = createRouter({
       component: () => import('../views/HomeView.vue'),
     },
     {
+      path: '/dishes',
+      name: 'dishes',
+      component: () => import('../views/DishView.vue'),
+    },
+    {
       path: '/order',
       name: 'order',
       component: () => import('../views/OrderView.vue'),
@@ -38,6 +43,11 @@ const router = createRouter({
       path: '/admin/restaurants',
       name: 'admin-restaurants',
       component: () => import('../views/admin/AccountNhaHang.vue'),
+    },
+    {
+      path: '/order-history',
+      name: 'order-history',
+      component: () => import('../views/OrderHistoryView.vue'),
     },
   ],
 })

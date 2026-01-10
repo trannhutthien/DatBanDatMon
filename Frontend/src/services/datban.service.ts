@@ -112,6 +112,16 @@ const datBanService = {
   async cancel(id: number) {
     const response = await api.put<{ success: boolean; message: string }>(`/dat-ban/${id}/cancel`)
     return response.data
+  },
+
+  /**
+   * Lấy danh sách đặt bàn theo user
+   */
+  async getByUser(nguoiDungId: number) {
+    const response = await api.get<{ success: boolean; data: DatBan[] }>('/dat-ban', {
+      params: { nguoi_dung_id: nguoiDungId }
+    })
+    return response.data
   }
 }
 

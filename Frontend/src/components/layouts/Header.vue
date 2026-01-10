@@ -17,15 +17,15 @@
           <span class="nav-icon"></span>
           Bàn Đã Đặt
         </router-link>
-        <a href="#" class="nav-link hot">
+        <router-link to="/dishes" class="nav-link hot">
           <span class="nav-icon"></span>
           Món Ăn
           <span class="badge">New</span>
-        </a>
-        <a href="#" class="nav-link">
+        </router-link>
+        <router-link to="/order-history" class="nav-link">
           <span class="nav-icon">✨</span>
-          Mới Nhất
-        </a>
+          Lịch Sử Đặt 
+        </router-link>
       </nav>
 
       <!-- Auth Buttons - Hiển thị khi chưa đăng nhập -->

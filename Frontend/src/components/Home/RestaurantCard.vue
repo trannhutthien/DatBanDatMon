@@ -56,6 +56,9 @@
 
     <!-- Footer -->
     <div class="card-footer">
+      <button class="book-table-btn" @click.stop="emit('click', props.restaurant)">
+        <span>🍽️</span> Đặt bàn
+      </button>
       <button class="view-menu-btn" @click.stop="emit('view-menu', props.restaurant)">
         <span>📋</span> Xem thực đơn
       </button>
@@ -249,23 +252,47 @@ const truncateText = (text: string, maxLength: number): string => {
 /* Footer */
 .card-footer {
   padding: 0 24px 24px;
+  display: flex;
+  gap: 12px;
 }
 
-.view-menu-btn {
-  width: 100%;
-  padding: 14px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.book-table-btn {
+  flex: 1;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #e53935 0%, #ff6f00 100%);
   color: white;
   border: none;
   border-radius: 14px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
+}
+
+.book-table-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(229, 57, 53, 0.4);
+}
+
+.view-menu-btn {
+  flex: 1;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .view-menu-btn:hover {

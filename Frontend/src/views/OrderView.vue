@@ -1,11 +1,19 @@
 <template>
   <div class="order-page">
     <div class="container">
-      <h1 class="page-title">🍽️ Danh sách bàn</h1>
+      <!-- Hiển thị tên nhà hàng nếu có -->
+      <h1 class="page-title">
+        🍽️ {{ currentRestaurant ? `Đặt bàn - ${currentRestaurant.TenNhaHang}` : 'Danh sách bàn' }}
+      </h1>
+      
+      <!-- Nút quay lại nếu đang xem theo nhà hàng -->
+      <div v-if="restaurantId" class="back-link">
+        <button @click="goBack" class="back-btn">← Quay lại danh sách nhà hàng</button>
+      </div>
       
       <!-- Filter khu vực -->
       <AreaFilter 
-        :areas="khuVucs"
+        :areas="filteredKhuVucs"
         :selected-area="selectedKhuVuc"
         @update:selected-area="handleSelectArea"
       />
@@ -48,14 +56,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import Card from '@/components/Home/Card.vue'
 import AreaFilter from '@/components/ui/AreaFilter.vue'
 import BookingForm, { type BookingData } from '@/components/form/BookingForm.vue'
 import banService, { type Ban, type KhuVuc } from '@/services/ban.service'
 import khuVucService from '@/services/khuvuc.service'
 import datBanService from '@/services/datban.service'
+import nhaHangService, { type NhaHang } from '@/services/nhahang.service'
 import authService from '@/services/auth.service'
+
+const route = useRoute()
+const router = useRouter()
 
 const bans = ref<Ban[]>([])
 const khuVucs = ref<KhuVuc[]>([])
@@ -63,17 +76,58 @@ const selectedKhuVuc = ref<KhuVuc | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 
+// Nhà hàng hiện tại
+const restaurantId = computed(() => route.query.restaurant ? Number(route.query.restaurant) : null)
+const currentRestaurant = ref<NhaHang | null>(null)
+
 // Booking form state
 const showBookingForm = ref(false)
 const selectedBan = ref<Ban | null>(null)
 
-// Lọc bàn theo khu vực đã chọn
-const filteredBans = computed(() => {
-  if (!selectedKhuVuc.value) {
-    return bans.value
+// Lọc khu vực theo nhà hàng
+const filteredKhuVucs = computed(() => {
+  if (!restaurantId.value) {
+    return khuVucs.value
   }
-  return bans.value.filter(ban => ban.KhuVucID === selectedKhuVuc.value?.KhuVucID)
+  return khuVucs.value.filter(kv => kv.NhaHangID === restaurantId.value)
 })
+
+// Lọc bàn theo nhà hàng và khu vực
+const filteredBans = computed(() => {
+  let result = bans.value
+  
+  // Debug: log để kiểm tra
+  console.log('restaurantId:', restaurantId.value)
+  console.log('Total bans:', bans.value.length)
+  console.log('Bans NhaHangID:', bans.value.map(b => b.NhaHangID))
+  
+  // Lọc theo nhà hàng nếu có
+  if (restaurantId.value) {
+    result = result.filter(ban => Number(ban.NhaHangID) === Number(restaurantId.value))
+    console.log('Filtered bans count:', result.length)
+  }
+  
+  // Lọc theo khu vực nếu có chọn
+  if (selectedKhuVuc.value) {
+    result = result.filter(ban => ban.KhuVucID === selectedKhuVuc.value?.KhuVucID)
+  }
+  
+  return result
+})
+
+const fetchRestaurant = async () => {
+  if (!restaurantId.value) {
+    currentRestaurant.value = null
+    return
+  }
+  
+  try {
+    const response = await nhaHangService.getById(restaurantId.value)
+    currentRestaurant.value = response.data.data || response.data
+  } catch (err) {
+    console.error('Error fetching restaurant:', err)
+  }
+}
 
 const fetchKhuVucs = async () => {
   try {
@@ -97,6 +151,10 @@ const fetchBans = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const goBack = () => {
+  router.push('/')
 }
 
 const handleSelectArea = (area: KhuVuc | null) => {
@@ -178,8 +236,15 @@ const handleBookingSubmit = async (data: BookingData) => {
 }
 
 onMounted(() => {
+  fetchRestaurant()
   fetchKhuVucs()
   fetchBans()
+})
+
+// Watch route changes để cập nhật khi đổi nhà hàng
+watch(() => route.query.restaurant, () => {
+  fetchRestaurant()
+  selectedKhuVuc.value = null
 })
 </script>
 
@@ -199,7 +264,29 @@ onMounted(() => {
   text-align: center;
   font-size: 2rem;
   color: #2c3e50;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
+}
+
+.back-link {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.back-btn {
+  padding: 10px 20px;
+  background: transparent;
+  border: 2px solid #667eea;
+  color: #667eea;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  background: #667eea;
+  color: white;
 }
 
 .tables-grid {

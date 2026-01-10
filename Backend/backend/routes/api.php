@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\BanController;       // Controller quản lý bàn
 use App\Http\Controllers\Api\KhuVucController;    // Controller quản lý khu vực
 use App\Http\Controllers\Api\DanhMucMonController; // Controller quản lý danh mục món
 use App\Http\Controllers\Api\DatBanController;    // Controller quản lý đặt bàn
+use App\Http\Controllers\Api\DatMonMangVeController; // Controller quản lý đặt món mang về
 
 /*
 |--------------------------------------------------------------------------
@@ -437,4 +438,41 @@ Route::prefix('dat-ban')->group(function () {
      * URL: PUT /api/dat-ban/{id}/cancel
      */
     Route::put('/{id}/cancel', [DatBanController::class, 'cancel']);
+});
+
+
+// ============================================================================
+// ĐẶT MÓN MANG VỀ ROUTES (Takeaway)
+// ============================================================================
+Route::prefix('dat-mon-mang-ve')->group(function () {
+    /**
+     * LẤY DANH SÁCH ĐƠN ĐẶT MÓN
+     * URL: GET /api/dat-mon-mang-ve
+     * Query: nguoi_dung_id, nha_hang_id, trang_thai
+     */
+    Route::get('/', [DatMonMangVeController::class, 'index']);
+
+    /**
+     * TẠO ĐƠN ĐẶT MÓN MỚI
+     * URL: POST /api/dat-mon-mang-ve
+     */
+    Route::post('/', [DatMonMangVeController::class, 'store']);
+
+    /**
+     * LẤY CHI TIẾT ĐƠN ĐẶT MÓN
+     * URL: GET /api/dat-mon-mang-ve/{id}
+     */
+    Route::get('/{id}', [DatMonMangVeController::class, 'show']);
+
+    /**
+     * CẬP NHẬT TRẠNG THÁI ĐƠN
+     * URL: PUT /api/dat-mon-mang-ve/{id}/status
+     */
+    Route::put('/{id}/status', [DatMonMangVeController::class, 'updateStatus']);
+
+    /**
+     * HỦY ĐƠN ĐẶT MÓN
+     * URL: PUT /api/dat-mon-mang-ve/{id}/cancel
+     */
+    Route::put('/{id}/cancel', [DatMonMangVeController::class, 'cancel']);
 });
