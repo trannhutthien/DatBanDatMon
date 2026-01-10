@@ -14,6 +14,11 @@ const router = createRouter({
       component: () => import('../views/OrderView.vue'),
     },
     {
+      path: '/booked-tables',
+      name: 'booked-tables',
+      component: () => import('../views/BookedTablesView.vue'),
+    },
+    {
       path: '/register',
       name: 'register',
       component: () => import('../components/form/RegisterView.vue'),
@@ -21,7 +26,7 @@ const router = createRouter({
     {
       path: '/auth/callback',
       name: 'auth-callback',
-      component: () => import('../views/AuthCallbackView.vue'),
+      component: () => import('../components/auth/AuthCallback.vue'),
     },
     // Admin Routes
     {

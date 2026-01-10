@@ -19,11 +19,17 @@
             <span class="item-price">{{ formatPrice(item.dish.price) }}</span>
           </div>
           <div class="item-controls">
-            <button @click="$emit('decrease', item.dish.id)" class="qty-btn">-</button>
+            <button @click="$emit('decrease', item.dish.id)" class="qty-btn">
+              -
+            </button>
             <span class="qty">{{ item.quantity }}</span>
-            <button @click="$emit('increase', item.dish.id)" class="qty-btn">+</button>
+            <button @click="$emit('increase', item.dish.id)" class="qty-btn">
+              +
+            </button>
           </div>
-          <button @click="$emit('remove', item.dish.id)" class="btn-remove">×</button>
+          <button @click="$emit('remove', item.dish.id)" class="btn-remove">
+            ×
+          </button>
         </div>
       </div>
 
@@ -48,17 +54,19 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
+
 /**
  * ============================================================================
  * LIST FOOT (CART) COMPONENT
  * ============================================================================
- * 
+ *
  * Component giỏ hàng tái sử dụng.
- * 
+ *
  * PROPS:
  * - cart: Danh sách các item trong giỏ hàng
  * - shippingFee: Phí giao hàng (mặc định: 20000)
- * 
+ *
  * EVENTS:
  * - increase: Tăng số lượng món (dishId)
  * - decrease: Giảm số lượng món (dishId)
@@ -86,7 +94,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  shippingFee: 20000
+  shippingFee: 20000,
 });
 
 const emit = defineEmits<{
@@ -94,26 +102,26 @@ const emit = defineEmits<{
   decrease: [dishId: number];
   remove: [dishId: number];
   checkout: [];
-  'require-login': [];
+  "require-login": [];
 }>();
 
 // Check login status from localStorage
 const isLoggedIn = () => {
-  const token = localStorage.getItem('auth_token')
-  const user = localStorage.getItem('user')
-  return !!(token && user)
-}
+  const token = localStorage.getItem("auth_token");
+  const user = localStorage.getItem("user");
+  return !!(token && user);
+};
 
 // Handle checkout - check login first
 const handleCheckout = () => {
   if (!isLoggedIn()) {
     // Emit event to require login first
-    emit('require-login')
+    emit("require-login");
   } else {
     // Already logged in, proceed to checkout
-    emit('checkout')
+    emit("checkout");
   }
-}
+};
 
 // Computed
 const cartItemCount = computed(() => {
@@ -121,7 +129,10 @@ const cartItemCount = computed(() => {
 });
 
 const subtotal = computed(() => {
-  return props.cart.reduce((sum, item) => sum + item.dish.price * item.quantity, 0);
+  return props.cart.reduce(
+    (sum, item) => sum + item.dish.price * item.quantity,
+    0
+  );
 });
 
 const total = computed(() => {
@@ -132,8 +143,6 @@ const total = computed(() => {
 const formatPrice = (price: number) => {
   return price.toLocaleString("vi-VN") + "đ";
 };
-
-import { computed } from "vue";
 </script>
 
 <style scoped>
@@ -311,4 +320,3 @@ import { computed } from "vue";
   box-shadow: 0 8px 25px rgba(229, 57, 53, 0.4);
 }
 </style>
-

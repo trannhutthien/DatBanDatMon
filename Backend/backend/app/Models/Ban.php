@@ -52,9 +52,10 @@ class Ban extends Model
      * CÁC TRƯỜNG CÓ THỂ GÁN HÀNG LOẠT
      */
     protected $fillable = [
+        'NhaHangID',   // ID nhà hàng
+        'KhuVucID',    // ID khu vực
         'SoBan',       // Số/tên bàn
         'SoGhe',       // Số ghế
-        'KhuVuc',      // Khu vực
         'TrangThai',   // Trạng thái
         'TaoLuc',      // Thời gian tạo
         'CapNhatLuc'   // Thời gian cập nhật
@@ -85,6 +86,36 @@ class Ban extends Model
     const TRANG_THAI_TRONG = 1;      // Bàn trống - sẵn sàng
     const TRANG_THAI_DA_DAT = 2;     // Đã đặt - chờ khách
     const TRANG_THAI_DANG_DUNG = 3;  // Đang sử dụng - có khách
+
+    /**
+     * ========================================================================
+     * QUAN HỆ VỚI NHAHANG (NHIỀU - MỘT)
+     * ========================================================================
+     */
+    public function nhaHang()
+    {
+        return $this->belongsTo(NhaHang::class, 'NhaHangID', 'NhaHangID');
+    }
+
+    /**
+     * ========================================================================
+     * QUAN HỆ VỚI KHUVUC (NHIỀU - MỘT)
+     * ========================================================================
+     */
+    public function khuVuc()
+    {
+        return $this->belongsTo(KhuVuc::class, 'KhuVucID', 'KhuVucID');
+    }
+
+    /**
+     * ========================================================================
+     * QUAN HỆ VỚI HOADON (MỘT - NHIỀU)
+     * ========================================================================
+     */
+    public function hoaDons()
+    {
+        return $this->hasMany(HoaDon::class, 'BanID', 'BanID');
+    }
 
     /**
      * ========================================================================

@@ -60,6 +60,8 @@ class HoaDon extends Model
      */
     protected $fillable = [
         'DatBanID',      // FK đơn đặt bàn
+        'NguoiDungID',   // FK người dùng
+        'NhaHangID',     // FK nhà hàng
         'NgayLap',       // Ngày lập hóa đơn
         'GiamGia',       // Số tiền giảm giá
         'Thue',          // Phần trăm thuế
@@ -107,6 +109,34 @@ class HoaDon extends Model
     const TRANG_THAI_CHUA_THANH_TOAN = 1;  // Chưa thanh toán - đang chờ
     const TRANG_THAI_DA_THANH_TOAN = 2;    // Đã thanh toán - hoàn tất
     const TRANG_THAI_HUY = 3;              // Đã hủy
+
+    /**
+     * ========================================================================
+     * QUAN HỆ VỚI NGUOIDUNG (NHIỀU - MỘT)
+     * ========================================================================
+     */
+    public function nguoiDung()
+    {
+        return $this->belongsTo(
+            NguoiDung::class,
+            'NguoiDungID',
+            'NguoiDungID'
+        );
+    }
+
+    /**
+     * ========================================================================
+     * QUAN HỆ VỚI NHAHANG (NHIỀU - MỘT)
+     * ========================================================================
+     */
+    public function nhaHang()
+    {
+        return $this->belongsTo(
+            NhaHang::class,
+            'NhaHangID',
+            'NhaHangID'
+        );
+    }
 
     /**
      * ========================================================================

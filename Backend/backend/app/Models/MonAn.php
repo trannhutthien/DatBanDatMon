@@ -57,6 +57,7 @@ class MonAn extends Model
     protected $fillable = [
         'TenMon',      // Tên món ăn
         'NhaHangID',   // FK nhà hàng (thuộc nhà hàng nào)
+        'DanhMucID',   // FK danh mục món
         'DonGia',      // Giá tiền
         'HinhAnh',     // URL hình ảnh
         'MoTa',        // Mô tả
@@ -117,6 +118,24 @@ class MonAn extends Model
             NhaHang::class,
             'NhaHangID',
             'NhaHangID'
+        );
+    }
+
+    /**
+     * ========================================================================
+     * QUAN HỆ VỚI DANHMUCMON (NHIỀU - MỘT)
+     * ========================================================================
+     * 
+     * Mỗi món ăn thuộc về một danh mục.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function danhMuc()
+    {
+        return $this->belongsTo(
+            DanhMucMon::class,
+            'DanhMucID',
+            'DanhMucID'
         );
     }
 

@@ -26,7 +26,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import authService from '@/services/auth.service'
 
 const router = useRouter()
 const route = useRoute()
@@ -162,4 +161,3 @@ p {
   box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
 }
 </style>
-

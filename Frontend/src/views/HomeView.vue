@@ -3,7 +3,8 @@
     <!-- Banner Slider -->
     <Banner />
 
-  
+    <!-- Nhà hàng uy tín -->
+    <TrustedRestaurants @view-all="goToRestaurants" />
 
     <!-- Popular Dishes - Lấy từ API -->
     <HomeFoot />
@@ -18,13 +19,22 @@
  * 
  * Trang chủ của ứng dụng, bao gồm:
  * - Banner slider
- * - Features section
+ * - TrustedRestaurants (nhà hàng uy tín)
  * - HomeFoot (món ăn phổ biến - lấy từ API)
  * ============================================================================
  */
 
+import { useRouter } from 'vue-router'
 import Banner from '@/components/Home/Banner.vue'
+import TrustedRestaurants from '@/components/Home/TrustedRestaurants.vue'
 import HomeFoot from '@/components/Home/HomeFoot.vue'
+
+const router = useRouter()
+
+const goToRestaurants = () => {
+  // Có thể navigate đến trang danh sách nhà hàng
+  router.push('/order')
+}
 </script>
 
 <style scoped>

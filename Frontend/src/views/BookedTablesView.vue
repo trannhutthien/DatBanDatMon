@@ -1,7 +1,7 @@
 <template>
-  <div class="order-page">
+  <div class="booked-tables-page">
     <div class="container">
-      <h1 class="page-title">🍽️ Danh sách bàn</h1>
+      <h1 class="page-title">📋 Danh sách bàn đã đặt</h1>
       
       <!-- Filter khu vực -->
       <AreaFilter 
@@ -12,7 +12,7 @@
 
       <!-- Loading -->
       <div v-if="loading" class="loading">
-        <p>Đang tải danh sách bàn...</p>
+        <p>Đang tải danh sách bàn đã đặt...</p>
       </div>
 
       <!-- Error -->
@@ -23,27 +23,20 @@
 
       <!-- Empty -->
       <div v-else-if="filteredBans.length === 0" class="empty">
-        <p>Không có bàn nào trong khu vực này</p>
+        <p>Không có bàn nào đã được đặt trong khu vực này</p>
       </div>
 
-      <!-- Danh sách bàn -->
+      <!-- Danh sách bàn đã đặt -->
       <div v-else class="tables-grid">
         <Card 
           v-for="ban in filteredBans" 
           :key="ban.BanID"
           :ban="ban"
           @view-detail="handleViewDetail"
-          @book-table="openBookingForm"
+          @book-table="handleViewBooking"
         />
       </div>
     </div>
-
-    <!-- Form đặt bàn -->
-    <BookingForm
-      v-model="showBookingForm"
-      :ban="selectedBan"
-      @submit="handleBookingSubmit"
-    />
   </div>
 </template>
 
@@ -51,11 +44,8 @@
 import { ref, computed, onMounted } from 'vue'
 import Card from '@/components/Home/Card.vue'
 import AreaFilter from '@/components/ui/AreaFilter.vue'
-import BookingForm, { type BookingData } from '@/components/form/BookingForm.vue'
 import banService, { type Ban, type KhuVuc } from '@/services/ban.service'
 import khuVucService from '@/services/khuvuc.service'
-import datBanService from '@/services/datban.service'
-import authService from '@/services/auth.service'
 
 const bans = ref<Ban[]>([])
 const khuVucs = ref<KhuVuc[]>([])
@@ -63,16 +53,17 @@ const selectedKhuVuc = ref<KhuVuc | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 
-// Booking form state
-const showBookingForm = ref(false)
-const selectedBan = ref<Ban | null>(null)
-
-// Lọc bàn theo khu vực đã chọn
+// Lọc bàn theo khu vực đã chọn (chỉ lấy bàn có TrangThai = 2)
 const filteredBans = computed(() => {
-  if (!selectedKhuVuc.value) {
-    return bans.value
+  // Chỉ lấy bàn đã đặt (TrangThai = 2)
+  let bookedBans = bans.value.filter(ban => ban.TrangThai === 2)
+  
+  // Lọc thêm theo khu vực nếu có chọn
+  if (selectedKhuVuc.value) {
+    bookedBans = bookedBans.filter(ban => ban.KhuVucID === selectedKhuVuc.value?.KhuVucID)
   }
-  return bans.value.filter(ban => ban.KhuVucID === selectedKhuVuc.value?.KhuVucID)
+  
+  return bookedBans
 })
 
 const fetchKhuVucs = async () => {
@@ -110,71 +101,13 @@ const handleViewDetail = (ban: Ban) => {
     `ID: ${ban.BanID}\n` +
     `Số ghế: ${ban.SoGhe}\n` +
     `Khu vực: ${khuVuc?.TenKhuVuc || 'Chưa phân khu'}\n` +
-    `Trạng thái: ${ban.TrangThai === 1 ? 'Trống' : ban.TrangThai === 2 ? 'Đã đặt' : 'Đang dùng'}`
+    `Trạng thái: Đã đặt`
   )
 }
 
-const openBookingForm = (ban: Ban) => {
-  selectedBan.value = ban
-  showBookingForm.value = true
-}
-
-const handleBookingSubmit = async (data: BookingData) => {
-  try {
-    // Lấy thông tin user đang đăng nhập
-    const currentUser = authService.getUser()
-    if (!currentUser) {
-      alert('Vui lòng đăng nhập để đặt bàn!')
-      return
-    }
-
-    // Chuẩn bị dữ liệu gửi API
-    const requestData = {
-      NguoiDungID: currentUser.NguoiDungID,
-      NhaHangID: selectedBan.value?.NhaHangID || 1,
-      BanID: data.BanID,
-      ThoiGianDen: data.ThoiGianDen,
-      SoNguoi: data.SoNguoi,
-      GhiChu: data.GhiChu || '',
-      items: data.items.map(item => ({
-        MonAnID: item.MonAnID,
-        SoLuong: item.SoLuong,
-        DonGia: item.DonGia
-      }))
-    }
-
-    // Gọi API đặt bàn
-    const response = await datBanService.create(requestData)
-
-    if (response.success) {
-      let message = 
-        `🎉 Đặt bàn thành công!\n\n` +
-        `Mã đặt bàn: #${response.data.DatBanID}\n` +
-        `Bàn: ${selectedBan.value?.SoBan}\n` +
-        `Họ tên: ${data.HoTen}\n` +
-        `SĐT: ${data.SDT}\n` +
-        `Thời gian: ${data.ThoiGianDen}\n` +
-        `Số người: ${data.SoNguoi}`
-      
-      if (data.items.length > 0) {
-        message += `\n\n📋 Món đã đặt:\n`
-        data.items.forEach(item => {
-          message += `- ${item.TenMon} x${item.SoLuong}\n`
-        })
-        message += `\n💰 Tổng tiền: ${data.TongTien.toLocaleString('vi-VN')}đ`
-      }
-      
-      alert(message)
-      showBookingForm.value = false
-      // Refresh danh sách bàn
-      fetchBans()
-    } else {
-      alert(`Đặt bàn thất bại: ${response.message}`)
-    }
-  } catch (err: any) {
-    console.error('Error booking table:', err)
-    alert(`Đặt bàn thất bại: ${err.response?.data?.message || err.message}`)
-  }
+const handleViewBooking = (ban: Ban) => {
+  // Xem thông tin đặt bàn
+  alert(`Xem thông tin đặt bàn của Bàn ${ban.SoBan}`)
 }
 
 onMounted(() => {
@@ -184,7 +117,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.order-page {
+.booked-tables-page {
   min-height: 100vh;
   background: #f8f9fa;
   padding: 40px 20px;

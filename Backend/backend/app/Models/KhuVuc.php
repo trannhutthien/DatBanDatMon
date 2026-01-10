@@ -51,15 +51,28 @@ class KhuVuc extends Model
      * CÁC TRƯỜNG CÓ THỂ GÁN HÀNG LOẠT
      */
     protected $fillable = [
+        'NhaHangID',   // ID nhà hàng
         'TenKhuVuc',   // Tên khu vực
         'MoTa',        // Mô tả
-        'TaoLuc'       // Thời gian tạo
     ];
 
     /**
-     * CÁC TRƯỜNG NGÀY THÁNG
+     * ========================================================================
+     * QUAN HỆ VỚI NHAHANG (NHIỀU - MỘT)
+     * ========================================================================
      */
-    protected $dates = [
-        'TaoLuc'
-    ];
+    public function nhaHang()
+    {
+        return $this->belongsTo(NhaHang::class, 'NhaHangID', 'NhaHangID');
+    }
+
+    /**
+     * ========================================================================
+     * QUAN HỆ VỚI BAN (MỘT - NHIỀU)
+     * ========================================================================
+     */
+    public function bans()
+    {
+        return $this->hasMany(Ban::class, 'KhuVucID', 'KhuVucID');
+    }
 }

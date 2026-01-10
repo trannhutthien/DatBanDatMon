@@ -37,6 +37,7 @@ export interface MonAn {
   MonAnID: number
   TenMon: string
   NhaHangID: number | null
+  DanhMucID: number | null
   DonGia: number
   HinhAnh: string | null
   MoTa: string | null
@@ -44,6 +45,10 @@ export interface MonAn {
   TaoLuc: string
   CapNhatLuc: string
   nha_hang?: NhaHang  // Quan hệ với nhà hàng (eager loaded)
+  danh_muc?: {        // Quan hệ với danh mục
+    DanhMucID: number
+    TenDanhMuc: string
+  }
 }
 
 /**

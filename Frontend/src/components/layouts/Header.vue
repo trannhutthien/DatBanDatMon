@@ -11,15 +11,15 @@
       <nav class="nav-menu" :class="{ 'nav-open': isMobileMenuOpen }">
         <router-link to="/order" class="nav-link">
           <span class="nav-icon">🍽️</span>
-          Đặt Món
+          Đặt Bàn
         </router-link>
-        <a href="#" class="nav-link">
-          <span class="nav-icon">⭐</span>
-          Nhà Hàng Uy Tín
-        </a>
+        <router-link to="/booked-tables" class="nav-link">
+          <span class="nav-icon"></span>
+          Bàn Đã Đặt
+        </router-link>
         <a href="#" class="nav-link hot">
-          <span class="nav-icon">🔥</span>
-          Ưu Đãi Hot
+          <span class="nav-icon"></span>
+          Món Ăn
           <span class="badge">New</span>
         </a>
         <a href="#" class="nav-link">
@@ -48,123 +48,126 @@
 
       <!-- Mobile Menu Toggle -->
       <button class="mobile-toggle" @click="toggleMobileMenu">
-        <span class="hamburger" :class="{ 'active': isMobileMenuOpen }"></span>
+        <span class="hamburger" :class="{ active: isMobileMenuOpen }"></span>
       </button>
     </div>
   </header>
 
   <!-- Register Form Popup -->
-  <RegisterView 
-    v-model="showRegisterModal" 
-    @success="handleRegisterSuccess" 
-    @switch-to-login="switchToLogin" 
+  <RegisterView
+    v-model="showRegisterModal"
+    @success="handleRegisterSuccess"
+    @switch-to-login="switchToLogin"
   />
 
   <!-- Login Form Popup -->
-  <LoginView 
-    v-model="showLoginModal" 
-    @success="handleLoginSuccess" 
-    @switch-to-register="switchToRegister" 
+  <LoginView
+    v-model="showLoginModal"
+    @success="handleLoginSuccess"
+    @switch-to-register="switchToRegister"
   />
 </template>
 
 <script setup lang="ts">
-import { ref, defineAsyncComponent, onMounted, onUnmounted } from 'vue'
-import authService from '@/services/auth.service'
-import Account from '@/components/form/Account.vue'
+import { ref, defineAsyncComponent, onMounted, onUnmounted } from "vue";
+import authService from "@/services/auth.service";
+import Account from "@/components/form/Account.vue";
 
 // Lazy load để tránh lỗi
-const RegisterView = defineAsyncComponent(() => import('@/components/form/RegisterView.vue'))
-const LoginView = defineAsyncComponent(() => import('@/components/form/LoginView.vue'))
+const RegisterView = defineAsyncComponent(
+  () => import("@/components/form/RegisterView.vue")
+);
+const LoginView = defineAsyncComponent(
+  () => import("@/components/form/LoginView.vue")
+);
 
-const isMobileMenuOpen = ref(false)
-const showRegisterModal = ref(false)
-const showLoginModal = ref(false)
+const isMobileMenuOpen = ref(false);
+const showRegisterModal = ref(false);
+const showLoginModal = ref(false);
 
 // User state
-const isLoggedIn = ref(false)
-const currentUser = ref<any>(null)
-const notificationCount = ref(3) // Demo: 3 thông báo
+const isLoggedIn = ref(false);
+const currentUser = ref<any>(null);
+const notificationCount = ref(3); // Demo: 3 thông báo
 
 // Check login status
 const checkLoginStatus = () => {
-  const user = authService.getUser()
-  const token = authService.getToken()
+  const user = authService.getUser();
+  const token = authService.getToken();
   if (user && token) {
-    isLoggedIn.value = true
-    currentUser.value = user
+    isLoggedIn.value = true;
+    currentUser.value = user;
   } else {
-    isLoggedIn.value = false
-    currentUser.value = null
+    isLoggedIn.value = false;
+    currentUser.value = null;
   }
-}
+};
 
 // Lắng nghe sự thay đổi localStorage (khi đăng nhập từ tab khác hoặc callback)
 const handleStorageChange = (event: StorageEvent) => {
-  if (event.key === 'auth_token' || event.key === 'user') {
-    checkLoginStatus()
+  if (event.key === "auth_token" || event.key === "user") {
+    checkLoginStatus();
   }
-}
+};
 
 // Custom event listener cho cùng tab (localStorage event chỉ fire ở tab khác)
 const handleAuthChange = () => {
-  checkLoginStatus()
-}
+  checkLoginStatus();
+};
 
 onMounted(() => {
-  checkLoginStatus()
+  checkLoginStatus();
   // Lắng nghe storage change từ tab khác
-  window.addEventListener('storage', handleStorageChange)
+  window.addEventListener("storage", handleStorageChange);
   // Lắng nghe custom event cho cùng tab
-  window.addEventListener('auth-changed', handleAuthChange)
-})
+  window.addEventListener("auth-changed", handleAuthChange);
+});
 
 onUnmounted(() => {
-  window.removeEventListener('storage', handleStorageChange)
-  window.removeEventListener('auth-changed', handleAuthChange)
-})
+  window.removeEventListener("storage", handleStorageChange);
+  window.removeEventListener("auth-changed", handleAuthChange);
+});
 
 const openRegisterModal = () => {
-  showRegisterModal.value = true
-  showLoginModal.value = false
-}
+  showRegisterModal.value = true;
+  showLoginModal.value = false;
+};
 
 const openLoginModal = () => {
-  showLoginModal.value = true
-  showRegisterModal.value = false
-}
+  showLoginModal.value = true;
+  showRegisterModal.value = false;
+};
 
 const switchToLogin = () => {
-  showRegisterModal.value = false
-  showLoginModal.value = true
-}
+  showRegisterModal.value = false;
+  showLoginModal.value = true;
+};
 
 const switchToRegister = () => {
-  showLoginModal.value = false
-  showRegisterModal.value = true
-}
+  showLoginModal.value = false;
+  showRegisterModal.value = true;
+};
 
 const handleRegisterSuccess = () => {
-  showRegisterModal.value = false
-  checkLoginStatus()
-}
+  showRegisterModal.value = false;
+  checkLoginStatus();
+};
 
 const handleLoginSuccess = () => {
-  showLoginModal.value = false
-  checkLoginStatus()
-}
+  showLoginModal.value = false;
+  checkLoginStatus();
+};
 
 const toggleMobileMenu = () => {
-  isMobileMenuOpen.value = !isMobileMenuOpen.value
-}
+  isMobileMenuOpen.value = !isMobileMenuOpen.value;
+};
 
 const handleLogout = () => {
-  authService.logout()
-  isLoggedIn.value = false
-  currentUser.value = null
-}
+  authService.logout();
+  isLoggedIn.value = false;
+  currentUser.value = null;
+};
 </script>
-
 
 <style scoped>
 .header {
@@ -174,9 +177,7 @@ const handleLogout = () => {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: 
-    0 4px 30px rgba(0, 0, 0, 0.08),
-    0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
 }
 
@@ -241,18 +242,30 @@ const handleLogout = () => {
 }
 
 .nav-link:hover {
-  background: linear-gradient(135deg, rgba(229, 57, 53, 0.08) 0%, rgba(255, 111, 0, 0.08) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(229, 57, 53, 0.08) 0%,
+    rgba(255, 111, 0, 0.08) 100%
+  );
   color: #e53935;
   transform: translateY(-2px);
 }
 
 .nav-link.hot {
-  background: linear-gradient(135deg, rgba(255, 111, 0, 0.1) 0%, rgba(255, 193, 7, 0.1) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 111, 0, 0.1) 0%,
+    rgba(255, 193, 7, 0.1) 100%
+  );
   color: #ff6f00;
 }
 
 .nav-link.hot:hover {
-  background: linear-gradient(135deg, rgba(255, 111, 0, 0.2) 0%, rgba(255, 193, 7, 0.2) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 111, 0, 0.2) 0%,
+    rgba(255, 193, 7, 0.2) 100%
+  );
 }
 
 .nav-icon {
@@ -274,8 +287,13 @@ const handleLogout = () => {
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 /* Auth Buttons */
@@ -406,8 +424,14 @@ const handleLogout = () => {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .dropdown-header {
@@ -451,7 +475,11 @@ const handleLogout = () => {
 }
 
 .dropdown-item:hover {
-  background: linear-gradient(135deg, rgba(229, 57, 53, 0.08) 0%, rgba(255, 111, 0, 0.08) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(229, 57, 53, 0.08) 0%,
+    rgba(255, 111, 0, 0.08) 100%
+  );
   color: #e53935;
 }
 
@@ -484,7 +512,7 @@ const handleLogout = () => {
 
 .hamburger::before,
 .hamburger::after {
-  content: '';
+  content: "";
   position: absolute;
   width: 24px;
   height: 2px;
@@ -492,8 +520,12 @@ const handleLogout = () => {
   transition: all 0.3s ease;
 }
 
-.hamburger::before { top: -7px; }
-.hamburger::after { bottom: -7px; }
+.hamburger::before {
+  top: -7px;
+}
+.hamburger::after {
+  bottom: -7px;
+}
 
 .hamburger.active {
   background: transparent;

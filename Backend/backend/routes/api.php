@@ -26,6 +26,11 @@ use App\Http\Controllers\Api\AuthController;      // Controller xử lý xác th
 use App\Http\Controllers\Api\MonAnController;     // Controller xử lý món ăn
 use App\Http\Controllers\Api\NguoiDungController; // Controller quản lý người dùng
 use App\Http\Controllers\Api\NhaHangController;   // Controller quản lý nhà hàng
+use App\Http\Controllers\Api\HoaDonController;    // Controller quản lý hóa đơn
+use App\Http\Controllers\Api\BanController;       // Controller quản lý bàn
+use App\Http\Controllers\Api\KhuVucController;    // Controller quản lý khu vực
+use App\Http\Controllers\Api\DanhMucMonController; // Controller quản lý danh mục món
+use App\Http\Controllers\Api\DatBanController;    // Controller quản lý đặt bàn
 
 /*
 |--------------------------------------------------------------------------
@@ -248,4 +253,188 @@ Route::prefix('nha-hang')->group(function () {
      * URL: DELETE /api/nha-hang/{id}
      */
     Route::delete('/{id}', [NhaHangController::class, 'destroy']);
+});
+
+// ============================================================================
+// HÓA ĐƠN ROUTES (Đặt hàng)
+// ============================================================================
+Route::prefix('hoa-don')->group(function () {
+    /**
+     * TẠO HÓA ĐƠN MỚI (ĐẶT HÀNG)
+     * URL: POST /api/hoa-don
+     */
+    Route::post('/', [HoaDonController::class, 'store']);
+
+    /**
+     * LẤY DANH SÁCH HÓA ĐƠN
+     * URL: GET /api/hoa-don
+     */
+    Route::get('/', [HoaDonController::class, 'index']);
+
+    /**
+     * LẤY CHI TIẾT HÓA ĐƠN
+     * URL: GET /api/hoa-don/{id}
+     */
+    Route::get('/{id}', [HoaDonController::class, 'show']);
+
+    /**
+     * CẬP NHẬT TRẠNG THÁI HÓA ĐƠN
+     * URL: PUT /api/hoa-don/{id}/status
+     */
+    Route::put('/{id}/status', [HoaDonController::class, 'updateStatus']);
+});
+
+// ============================================================================
+// BÀN ROUTES (Quản lý bàn)
+// ============================================================================
+Route::prefix('ban')->group(function () {
+    /**
+     * THỐNG KÊ BÀN
+     * URL: GET /api/ban/stats
+     */
+    Route::get('/stats', [BanController::class, 'stats']);
+
+    /**
+     * LẤY DANH SÁCH BÀN
+     * URL: GET /api/ban
+     * Query: khu_vuc_id, trang_thai, nha_hang_id
+     */
+    Route::get('/', [BanController::class, 'index']);
+
+    /**
+     * TẠO BÀN MỚI
+     * URL: POST /api/ban
+     */
+    Route::post('/', [BanController::class, 'store']);
+
+    /**
+     * LẤY CHI TIẾT BÀN
+     * URL: GET /api/ban/{id}
+     */
+    Route::get('/{id}', [BanController::class, 'show']);
+
+    /**
+     * CẬP NHẬT BÀN
+     * URL: PUT /api/ban/{id}
+     */
+    Route::put('/{id}', [BanController::class, 'update']);
+
+    /**
+     * CẬP NHẬT TRẠNG THÁI BÀN
+     * URL: PUT /api/ban/{id}/status
+     */
+    Route::put('/{id}/status', [BanController::class, 'updateStatus']);
+
+    /**
+     * XÓA BÀN
+     * URL: DELETE /api/ban/{id}
+     */
+    Route::delete('/{id}', [BanController::class, 'destroy']);
+});
+
+// ============================================================================
+// KHU VỰC ROUTES (Quản lý khu vực)
+// ============================================================================
+Route::prefix('khu-vuc')->group(function () {
+    /**
+     * LẤY DANH SÁCH KHU VỰC
+     * URL: GET /api/khu-vuc
+     */
+    Route::get('/', [KhuVucController::class, 'index']);
+
+    /**
+     * TẠO KHU VỰC MỚI
+     * URL: POST /api/khu-vuc
+     */
+    Route::post('/', [KhuVucController::class, 'store']);
+
+    /**
+     * LẤY CHI TIẾT KHU VỰC
+     * URL: GET /api/khu-vuc/{id}
+     */
+    Route::get('/{id}', [KhuVucController::class, 'show']);
+
+    /**
+     * CẬP NHẬT KHU VỰC
+     * URL: PUT /api/khu-vuc/{id}
+     */
+    Route::put('/{id}', [KhuVucController::class, 'update']);
+
+    /**
+     * XÓA KHU VỰC
+     * URL: DELETE /api/khu-vuc/{id}
+     */
+    Route::delete('/{id}', [KhuVucController::class, 'destroy']);
+});
+
+// ============================================================================
+// DANH MỤC MÓN ROUTES (Quản lý danh mục món ăn)
+// ============================================================================
+Route::prefix('danh-muc-mon')->group(function () {
+    /**
+     * LẤY DANH SÁCH DANH MỤC MÓN
+     * URL: GET /api/danh-muc-mon
+     */
+    Route::get('/', [DanhMucMonController::class, 'index']);
+
+    /**
+     * TẠO DANH MỤC MỚI
+     * URL: POST /api/danh-muc-mon
+     */
+    Route::post('/', [DanhMucMonController::class, 'store']);
+
+    /**
+     * LẤY CHI TIẾT DANH MỤC
+     * URL: GET /api/danh-muc-mon/{id}
+     */
+    Route::get('/{id}', [DanhMucMonController::class, 'show']);
+
+    /**
+     * CẬP NHẬT DANH MỤC
+     * URL: PUT /api/danh-muc-mon/{id}
+     */
+    Route::put('/{id}', [DanhMucMonController::class, 'update']);
+
+    /**
+     * XÓA DANH MỤC
+     * URL: DELETE /api/danh-muc-mon/{id}
+     */
+    Route::delete('/{id}', [DanhMucMonController::class, 'destroy']);
+});
+
+
+// ============================================================================
+// ĐẶT BÀN ROUTES (Quản lý đặt bàn)
+// ============================================================================
+Route::prefix('dat-ban')->group(function () {
+    /**
+     * LẤY DANH SÁCH ĐẶT BÀN
+     * URL: GET /api/dat-ban
+     * Query: nguoi_dung_id, nha_hang_id, trang_thai
+     */
+    Route::get('/', [DatBanController::class, 'index']);
+
+    /**
+     * TẠO ĐƠN ĐẶT BÀN MỚI
+     * URL: POST /api/dat-ban
+     */
+    Route::post('/', [DatBanController::class, 'store']);
+
+    /**
+     * LẤY CHI TIẾT ĐẶT BÀN
+     * URL: GET /api/dat-ban/{id}
+     */
+    Route::get('/{id}', [DatBanController::class, 'show']);
+
+    /**
+     * CẬP NHẬT TRẠNG THÁI ĐẶT BÀN
+     * URL: PUT /api/dat-ban/{id}/status
+     */
+    Route::put('/{id}/status', [DatBanController::class, 'updateStatus']);
+
+    /**
+     * HỦY ĐẶT BÀN
+     * URL: PUT /api/dat-ban/{id}/cancel
+     */
+    Route::put('/{id}/cancel', [DatBanController::class, 'cancel']);
 });
